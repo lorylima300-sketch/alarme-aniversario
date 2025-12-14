@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Alarme de Aniversários 🎉</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    ul { list-style: none; padding: 0; }
+    li {
+      padding: 8px;
+      background: #eee;
+      margin-bottom: 6px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .remove {
+      background: #e53935;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎂 Alarme de Aniversários</h1>
+  <div class="container">
+    <input type="text" id="name" placeholder="Nome da pessoa" />
+    <input type="date" id="date" />
+    <button onclick="addBirthday()">Adicionar aniversário</button>
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
+    let birthdays = JSON.parse(localStorage.getItem('birthdays')) || [];
+
+    function save() {
+      localStorage.setItem('birthdays', JSON.stringify(birthdays));
+      render();
+    }
+
+    function addBirthday() {
+      const name = document.getElementById('name').value;
+      const date = document.getElementById('date').value;
+      if (!name || !date) return alert('Preencha todos os campos');
+      birthdays.push({ name, date });
+      save();
+      document.getElementById('name').value = '';
+      document.getElementById('date').value = '';
+    }
+
+    function removeBirthday(index) {
+      birthdays.splice(index, 1);
+      save();
+    }
+
+    function render() {
+      const ul = document.getElementById('list');
+      ul.innerHTML = '';
+      birthdays.forEach((b, i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${b.name} — ${new Date(b.date).toLocaleDateString()} <span class='remove' onclick='removeBirthday(${i})'>X</span>`;
+        ul.appendChild(li);
+      });
+    }
+
+    function checkBirthdays() {
+      const today = new Date();
+      birthdays.forEach(b => {
+        const bd = new Date(b.date);
+        if (bd.getDate() === today.getDate() && bd.getMonth() === today.getMonth()) {
+          new Notification('🎉 Aniversário hoje!', {
+            body: `Hoje é aniversário de ${b.name}! 🎂`
+          });
+        }
+      });
+    }
+
+    render();
+    checkBirthdays();
+    setInterval(checkBirthdays, 60 * 60 * 1000);
+  </script>
+</body>
+</html>
